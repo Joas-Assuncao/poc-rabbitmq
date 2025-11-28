@@ -2,18 +2,22 @@ import { FastifyInstance } from "fastify";
 
 export default async function routes(fastify: FastifyInstance) {
   fastify.post("/send", async (req, reply) => {
-    const queue = "poc_queue";
+    // configurações pra quando não é exchange
+    // const queue = "poc_queue";
+    // const channel = fastify.rabbit.channel;
 
-    const channel = fastify.rabbit.channel;
-
-    const msg = {
+    const message = {
       body: req.body,
-      text: "Hello RabbitMQ",
+      text: "Hello from exchange",
       date: new Date(),
     };
 
-    await channel.assertQueue(queue, { durable: false });
-    channel.sendToQueue(queue, Buffer.from(JSON.stringify(msg)));
-    return { sent: true, msg };
+    fastify.rabbit.channel.publish(
+      "poc-exchange",
+      "poc.key",
+      Buffer.from(JSON.stringify(message))
+    )
+
+    return { status: "Message sent!", message };
   });
 }
